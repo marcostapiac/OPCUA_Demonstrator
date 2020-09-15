@@ -6,7 +6,7 @@ Phase 1 is a minimal demonstrator designed to prove the basic OPC-UA features ru
 It simulates a Server running on a single sensor in a manufacturing plant, which is then accessed by a Client which prompts the user to retrieve different information in the Server Address Space. Realistically, Client and Server will run on different devices. 
 
 The Server supports: 
-      * Complex Object Types
+* Complex Object Types
           * Hierarchy design
           * Instantiation
       * Sensor Calibration Methods
