@@ -7,8 +7,8 @@ It simulates a Server running on a single sensor in a manufacturing plant, which
 
 The Server supports: 
 * Complex Object Types
-      * Hierarchy design
-      * Instantiation
+  * Hierarchy design
+  * Instantiation
 * Sensor Calibration Methods
 * Sensor Value change Event creation 
 * Historical Data Access
