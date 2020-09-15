@@ -7,22 +7,22 @@ It simulates a Server running on a single sensor in a manufacturing plant, which
 
 The Server supports: 
 * Complex Object Types
-          * Hierarchy design
-          * Instantiation
-      * Sensor Calibration Methods
-      * Sensor Value change Event creation 
-      * Historical Data Access
-      * Current Read, Write functionality for Node attributes
-      * Subscriptions
+         * Hierarchy design
+         * Instantiation
+* Sensor Calibration Methods
+* Sensor Value change Event creation 
+* Historical Data Access
+* Current Read, Write functionality for Node attributes
+* Subscriptions
       
 The Client supports:
-      * Server connection
-      * Address Space browsing
-      * Event subscriptions
-      * Data Change subscriptions
-      * Historical Access
-      * Current Read, Write Functionality
-      * Calling Method, and modifying Method parameters
+* Server connection
+* Address Space browsing
+* Event subscriptions
+* Data Change subscriptions
+* Historical Access
+* Current Read, Write Functionality
+* Calling Method, and modifying Method parameters
 
 The Phase 2.0 demonstrator aims to incorporate a device which simulates a Server and Client simultaneously. 
 
