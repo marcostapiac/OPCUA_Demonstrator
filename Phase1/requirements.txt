@@ -1,0 +1,15 @@
+certifi==2020.6.20
+cffi==1.14.2
+chardet==3.0.4
+cryptography==3.1
+idna==2.10
+lxml==4.5.2
+opcua==0.98.12
+pycparser==2.20
+PyQt5==5.15.1
+PyQt5-sip==12.8.1
+python-dateutil==2.8.1
+pytz==2020.1
+requests==2.24.0
+six==1.15.0
+urllib3==1.25.10
