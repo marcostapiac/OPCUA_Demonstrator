@@ -1,10 +1,11 @@
 import time
-import socket
+import cryptography
 from random import randint
+
 from opcua import Server, ua, uamethod
+from opcua.common.ua_utils import value_to_datavalue
 from opcua.ua.attribute_ids import AttributeIds
 from opcua.ua.uatypes import ValueRank  # Library where we can find different ua types (EventNotifiers, etc)
-from opcua.common.ua_utils import value_to_datavalue
 
 
 class ExtendedServer(Server):
@@ -13,8 +14,8 @@ class ExtendedServer(Server):
 
     def __init__(self, port):
         super().__init__()
-        ip = "192.168.100.1"
-        self.url = "opc.tcp://" + str(ip) + ":" + str(port) + "/freeopcua/server/"
+        ip = "192.168.41.126"
+        self.url = "opc.tcp://" + str(ip) + ":" + str(port) + "/server/"
         self.set_endpoint(self.url)
 
         # Create personal Namespace (good practice)
