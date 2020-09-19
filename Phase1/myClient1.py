@@ -1,6 +1,5 @@
 from opcua import Client
 from opcua.ua import AttributeIds, BrowseDirection, ObjectIds
-import socket
 
 
 # Handler class for Subscription
@@ -15,10 +14,7 @@ class SubHandler(object):
     def event_notification(self, event):
         print("New event with source Id 'ns={};i={}', and type '{}'.\n".format(event.SourceNode.NamespaceIndex,
                                                                                event.SourceNode.Identifier,
-
                                                                                event.Message.Text))
-
-
 class ExtendedClient(Client):
 
     def __init__(self, ip, port):
@@ -28,8 +24,11 @@ class ExtendedClient(Client):
     def obtainHistoricalValues(self, node, parentNode, methodNode):
         childs = node.get_referenced_nodes(direction=BrowseDirection.Forward, nodeclassmask=1 << 1)
         TempHistory = []
+
         for child in childs:
-            if "Value" in child.get_browse_name().Name:
+            if "Unit" in child.get_browse_name().Name:
+                unit = child.get_value()
+            elif "Value" in child.get_browse_name().Name:
                 print("Sensor calibration model is linear, ie, y = mx + c\n")
                 m = input("Please input linear calibration parameter, 'm'.\n")
                 if m == "":  # No calibration parameters given
@@ -42,7 +41,8 @@ class ExtendedClient(Client):
                         val = parentNode.call_method(methodNode, val.Value.Value, float(m), float(c))
                         TempHistory.append(val)  # Latest value is at 0th index
 
-        print("Temperature History (°C): {}\n".format(TempHistory))  # Print calibrated data
+        TempHistory = [str(x) + unit for x in TempHistory]
+        print("Temperature History (°C): {}\n".format(", ".join(TempHistory)))  # Print calibrated data
         return TempHistory
 
     def initiateSubscriptions(self, Nodes, thisSubscription=None):
@@ -90,9 +90,15 @@ class ExtendedClient(Client):
     def getSensorValue(self, thisSensor):
         childs = thisSensor.get_referenced_nodes(direction=BrowseDirection.Forward,
                                                  nodeclassmask=1 << 1)  # Obtain Variables associated to sensor
+        val = "No Value"
+        unit = ""
         for child in childs:
             if "Value" in child.get_browse_name().Name:
-                print("Sensor Value of Sensor {} is {}\n".format(thisSensor.get_display_name().Text, child.get_value()))
+                val = child.get_value()
+            elif "Unit" in child.get_browse_name().Name:
+                unit = child.get_value()
+
+        print("Sensor Value of Sensor {} is {}{}\n".format(thisSensor.get_display_name().Text, val, unit))
 
     def haltSubscriptions(self, Subscriptions, dataChangeHandlers=[], eventHandlers=[]):
         handlers = dataChangeHandlers + eventHandlers
@@ -109,7 +115,7 @@ class ExtendedClient(Client):
 
 
 if __name__ == "__main__":
-    client = ExtendedClient("192.168.100.1", 4840)  # Connect to server
+    client = ExtendedClient("192.168.41.126", 4840)  # Connect to server
     try:
         client.connect()
         print("Client connected at {}\n".format(client.url))
