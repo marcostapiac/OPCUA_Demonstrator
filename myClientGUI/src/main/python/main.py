@@ -1,8 +1,9 @@
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import pyqtSlot, Qt
+from PyQt5.QtCore import pyqtSlot, Qt, QEventLoop, QTimer
 from opcua.ua import BrowseDirection, ObjectIds, AttributeIds
 from opcua import Client
 import sys
+import time
 from fbs_runtime.application_context.PyQt5 import ApplicationContext, cached_property
 
 
@@ -20,14 +21,13 @@ class SubHandler(object):
                                                                                event.SourceNode.Identifier,
                                                                                event.Message.Text))
 
-
 class ExtendedClient(Client):
 
     def __init__(self, ip, port):
         self.url = "opc.tcp://" + str(ip) + ":" + str(port) + "/freeopcua/server/"
         super().__init__(self.url)  # Returns client object with access to Server Address Space
 
-    def getParams(self, parameterInterface):
+    def getParams(self, gui, parameterInterface):
         m, c = 0, 0
         m, okPressed = QInputDialog.getDouble(parameterInterface, "Get Parameter",
                                               "Please input linear calibration parameter, 'm'.\n "
@@ -35,6 +35,9 @@ class ExtendedClient(Client):
         if okPressed and m != 0:
             c, okPressed = QInputDialog.getDouble(parameterInterface, "Get Parameter",
                                                   "Please input linear calibration parameter, 'c'\n")
+        gui.setCentralWidget(parameterInterface)
+        gui.setWindowTitle("Options GUI")
+        gui.show()
         return m, c
 
     def obtainHistoricalValues(self, gui, node, parentNode, methodNode):
@@ -46,7 +49,7 @@ class ExtendedClient(Client):
                 unit = child.get_value()
             elif "Value" in child.get_browse_name().Name:
                 parameterInterface = QGroupBox("Sensor calibration model is linear, ie, y = mx + c")
-                m, c = self.getParams(parameterInterface)
+                m, c = self.getParams(gui, parameterInterface)
                 if m != 0:  # m = 0 corresponds to constant sensor values, hence it is a null input value
                     for val in child.read_raw_history():
                         val = parentNode.call_method(methodNode, val.Value.Value, float(m), float(c))
@@ -57,9 +60,6 @@ class ExtendedClient(Client):
                         TempHistory.append(val)  # Latest value is at 0th index
         TempHistory = [str(x) + unit for x in TempHistory]
 
-        gui.setCentralWidget(parameterInterface)
-        gui.setWindowTitle("Options GUI")
-        gui.show()
         return TempHistory
 
     def initiateSubscriptions(self, Nodes, thisSubscription=None):
@@ -178,7 +178,7 @@ class ClientGUI(QMainWindow):
         self.show()  # Outputs Window layout
 
     def checkConnectionInterface(self):
-        self.client = ExtendedClient("192.168.41.126", 4840)
+        self.client = ExtendedClient("172.20.10.9", 4840)
         try:
             checkInterface = QGroupBox("Successful connection")
             self.client.connect()
@@ -215,14 +215,10 @@ class ClientGUI(QMainWindow):
         self.historizingButton = self.createButton(True, False, "Historized Values")
         self.historizingButton.clicked.connect(self.onHistorizingButtonClick)
 
-        self.notificationsButton = self.createButton(True, False, "Notifications")
-        self.notificationsButton.clicked.connect(self.onNotificationsButtonClick)
-
         self.exitButton = self.createButton(True, False, "Exit")
         self.exitButton.clicked.connect(self.onExitButtonClick)
 
-        layout = self.createLayout([self.serialButton, self.valueButton, self.historizingButton,
-                                    self.notificationsButton, self.exitButton])
+        layout = self.createLayout([self.serialButton, self.valueButton, self.historizingButton, self.exitButton])
         interface.setLayout(layout)
 
         self.setCentralWidget(interface)
@@ -252,6 +248,9 @@ class ClientGUI(QMainWindow):
             self.setCentralWidget(serialInterface)
             self.setWindowTitle("Options GUI")
             self.show()
+            loop = QEventLoop()
+            QTimer.singleShot(1000, loop.quit)
+            loop.exec_()
 
     @pyqtSlot()
     def onValueButtonClick(self):
@@ -276,6 +275,9 @@ class ClientGUI(QMainWindow):
             self.setCentralWidget(valueInterface)
             self.setWindowTitle("Options GUI")
             self.show()
+            loop = QEventLoop()
+            QTimer.singleShot(1000, loop.quit)
+            loop.exec_()
 
     @pyqtSlot()
     def onHistorizingButtonClick(self):
@@ -289,8 +291,12 @@ class ClientGUI(QMainWindow):
             text.setFontPointSize(14)
             text.setFontWeight(75)  # Bold
             # Get historical values for each sensor
-            text.append(str(", ".join(self.client.obtainHistoricalValues(self, sensor, self.client.ObjectsRoot,
-                                                                         self.client.calibrationMethod))))
+            vals = self.client.obtainHistoricalValues(self, sensor, self.client.ObjectsRoot,
+                                                                         self.client.calibrationMethod)
+            if not vals:
+                text.append("No Values")
+            else:
+                text.append(str(", ".join(vals)))
             text.setAlignment(Qt.AlignCenter)
             text.setReadOnly(True)
 
@@ -303,14 +309,6 @@ class ClientGUI(QMainWindow):
             self.setCentralWidget(historicalInterface)
             self.setWindowTitle("Options GUI")
             self.show()
-
-    @pyqtSlot()
-    def onNotificationsButtonClick(self):
-        # Pub-Sub for Temp Sensor
-        Subscription, dataChange_Handlers, event_Handlers = self.client.initiateSubscriptions(self.client.Sensors)
-        while input() != "":
-            continue
-        Subscription.delete()  # Or haltSubscriptions(Subscriptions, dataChange_Handlers, event_Handlers)
 
     @pyqtSlot()
     def onExitButtonClick(self):
