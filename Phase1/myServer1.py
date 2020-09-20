@@ -14,7 +14,7 @@ class ExtendedServer(Server):
 
     def __init__(self, port):
         super().__init__()
-        ip = "192.168.41.126"
+        ip = "172.20.10.9"
         self.url = "opc.tcp://" + str(ip) + ":" + str(port) + "/server/"
         self.set_endpoint(self.url)
 
@@ -112,6 +112,9 @@ if __name__ == "__main__":
     # Instantiate objects
     Temp = ObjectRoot.add_object(server.idx, "TemperatureSensor", objecttype=TempSensors)
     Temp.get_child(["2:SensorModelInformation"]).set_attribute(AttributeIds.Value, value_to_datavalue("SMTIR 9901"))
+    Temp2 = ObjectRoot.add_object(server.idx, "TemperatureSensor2", objecttype=TempSensors)
+    Temp2.get_child(["2:SensorModelInformation"]).set_attribute(AttributeIds.Value, value_to_datavalue("IBMHY 9901"))
+
 
     # Enable Event Notifier for Server for Events and History
     Temp.set_attribute(AttributeIds.EventNotifier, value_to_datavalue(1))

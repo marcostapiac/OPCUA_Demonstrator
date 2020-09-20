@@ -42,7 +42,10 @@ class ExtendedClient(Client):
                         TempHistory.append(val)  # Latest value is at 0th index
 
         TempHistory = [str(x) + unit for x in TempHistory]
-        print("Temperature History (°C): {}\n".format(", ".join(TempHistory)))  # Print calibrated data
+        if not TempHistory:
+            print("No historized values for node {}\n".format(node.get_display_name().Text))
+        else:
+            print("Temperature History (°C): {}\n".format(", ".join(TempHistory)))  # Print calibrated data
         return TempHistory
 
     def initiateSubscriptions(self, Nodes, thisSubscription=None):
@@ -115,7 +118,7 @@ class ExtendedClient(Client):
 
 
 if __name__ == "__main__":
-    client = ExtendedClient("192.168.41.126", 4840)  # Connect to server
+    client = ExtendedClient("172.20.10.9", 4840)  # Connect to server
     try:
         client.connect()
         print("Client connected at {}\n".format(client.url))
@@ -147,7 +150,8 @@ if __name__ == "__main__":
             elif choice == "Historize":
                 for sensor in Sensors:
                     # Calibrate Sensor for every loading of Historical values
-                    client.obtainHistoricalValues(sensor, ObjectsRoot, calibrationMethod)
+                    if sensor.get_child("2:SensorValue").get_attribute(AttributeIds.Historizing):
+                        client.obtainHistoricalValues(sensor, ObjectsRoot, calibrationMethod)
             elif choice == "Value":
                 for sensor in Sensors:
                     client.getSensorValue(sensor)
